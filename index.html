@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RSSB Open Sewa Registration</title>
+
+  <!-- Material-ish font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#F5F7FB;
+      --surface:#FFFFFF;
+      --text:#111827;
+      --muted:#6B7280;
+      --border:#E5E7EB;
+
+      --primary:#1E40AF;        /* blue-800 */
+      --primary-600:#2563EB;    /* blue-600 */
+      --success:#0F766E;        /* teal-700 */
+      --danger:#B91C1C;         /* red-700 */
+
+      --shadow: 0 6px 18px rgba(17, 24, 39, .08);
+      --radius: 16px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: Roboto, system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header{
+      position: sticky;
+      top:0;
+      z-index:10;
+      background: linear-gradient(135deg, var(--primary), #111827);
+      color:#fff;
+      padding: 18px 16px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.12);
+    }
+
+    header h1{
+      margin:0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+    header p{
+      margin:6px 0 0;
+      font-size: 13px;
+      opacity:.9;
+    }
+
+    main{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .card{
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .cardBody{
+      padding: 16px;
+    }
+
+    label{
+      display:block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    select{
+      width:100%;
+      padding: 14px 14px;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-size: 15px;
+      outline:none;
+    }
+    select:focus{
+      border-color: rgba(37,99,235,.55);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+    }
+
+    .list{
+      margin-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .listHeader{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: #F9FAFB;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #EEF2FF;
+      color: #1E3A8A;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .btnRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    button{
+      border:0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor:pointer;
+      transition: transform .04s ease, opacity .2s ease;
+      min-height: 40px;
+    }
+    button:active{ transform: scale(.99); }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
+
+    .btnGhost{
+      background:#fff;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btnPrimary{
+      background: var(--primary-600);
+      color:#fff;
+    }
+
+    .btnSuccess{
+        background: var(--success);
+        color: #fff;
+    }
+
+
+    .listBody{
+      max-height: 55vh;
+      overflow:auto;
+    }
+
+    .item{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #F3F4F6;
+    }
+    .item:last-child{ border-bottom:0; }
+
+    .check{
+      width: 22px;
+      height: 22px;
+      accent-color: var(--primary-600);
+      cursor:pointer;
+    }
+
+    .name{
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
+    .footer{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap:12px;
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .status{
+      font-size: 13px;
+      color: var(--muted);
+      min-height: 18px;
+    }
+    .ok{ color: var(--success); font-weight: 600; }
+    .err{ color: var(--danger); font-weight: 600; }
+
+    iframe{ display:none; }
+
+    @media (max-width: 520px){
+      .listHeader{ flex-direction: column; align-items: stretch; }
+      .btnRow{ justify-content: stretch; }
+      .btnRow button{ width: 100%; }
+      .footer{ flex-direction: column; align-items: stretch; }
+      .footer button{ width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>RSSB Open Sewa Registration</h1>
+    <p>Select a department, tick multiple names, then register.</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="cardBody">
+        <label>Department</label>
+        <select id="deptSelect" disabled>
+          <option value="">Loading…</option>
+        </select>
+
+        <div class="list">
+          <div class="listHeader">
+            <span class="pill" id="countPill">0 selected</span>
+
+            <div class="btnRow">
+              <button class="btnGhost" id="selectAllBtn" disabled>Select all</button>
+              <button class="btnGhost" id="clearBtn" disabled>Clear</button>
+            </div>
+          </div>
+
+          <div class="listBody" id="nameList"></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <button class="btnPrimary" id="registerBtn">Register selected</button>
+        <button class="btnSuccess" id="doneBtn" style="display:none;">Done</button>
+        <div class="status" id="status"></div>
+      </div>
+
+      <iframe name="hiddenFrame"></iframe>
+
+      <form id="postForm" target="hiddenFrame" method="POST" style="display:none;">
+        <input type="hidden" name="action" value="register" />
+        <input type="hidden" name="records" id="recordsField" value="[]" />
+      </form>
+    </div>
+  </main>
+
+  <script>
+    /***********************
+     * Paste your Apps Script Web App URL here:
+     ***********************/
+    const API_BASE = "https://script.google.com/macros/s/AKfycbxh0C63rp_Ep_8ltS0p3ummdgxlnTorMVX89VeDWhAaABVH_cx4exDgjANugCdvGtxk/exec"; // https://script.google.com/macros/s/XXXX/exec
+
+    let peopleByDept = {};
+    let currentDept = "";
+    let selected = new Set();
+
+    const deptSelect   = document.getElementById("deptSelect");
+    const nameList     = document.getElementById("nameList");
+    const registerBtn  = document.getElementById("registerBtn");
+    const selectAllBtn = document.getElementById("selectAllBtn");
+    const clearBtn     = document.getElementById("clearBtn");
+    const statusEl     = document.getElementById("status");
+    const countPill    = document.getElementById("countPill");
+    const postForm     = document.getElementById("postForm");
+    const recordsField = document.getElementById("recordsField");
+    const doneBtn = document.getElementById("doneBtn");
+
+    function loadJSONP(url) {
+      return new Promise((resolve, reject) => {
+        const cbName = "cb_" + Math.random().toString(36).slice(2);
+        window[cbName] = (data) => { cleanup(); resolve(data); };
+        const script = document.createElement("script");
+        script.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cbName;
+        script.onerror = () => { cleanup(); reject(new Error("JSONP load failed")); };
+        document.head.appendChild(script);
+        function cleanup(){ delete window[cbName]; script.remove(); }
+      });
+    }
+
+    function setStatus(msg, type) {
+      statusEl.textContent = msg;
+      statusEl.className = "status " + (type === "ok" ? "ok" : type === "err" ? "err" : "");
+    }
+
+    function setEnabled(enabled) {
+      deptSelect.disabled   = !enabled;
+      selectAllBtn.disabled = !enabled;
+      clearBtn.disabled     = !enabled;
+      registerBtn.disabled  = !enabled;
+    }
+
+    function updateCount() {
+      countPill.textContent = `${selected.size} selected`;
+      registerBtn.disabled = selected.size === 0 || !currentDept;
+    }
+
+    function escapeHtml(s) {
+      return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function renderNames() {
+      nameList.innerHTML = "";
+      selected.clear();
+      updateCount();
+
+      if (!currentDept) {
+        nameList.innerHTML = `<div class="item"><div class="name" style="font-weight:400;color:#6B7280;">Select a department to show names.</div></div>`;
+        return;
+      }
+
+      const list = (peopleByDept[currentDept] || []);
+      if (list.length === 0) {
+        nameList.innerHTML = `<div class="item"><div class="name" style="font-weight:400;color:#6B7280;">No names found for this department.</div></div>`;
+        return;
+      }
+
+      list.forEach(p => {
+        const id = p.name; // assumed unique within dept
+
+        const row = document.createElement("div");
+        row.className = "item";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.className = "check";
+        cb.addEventListener("change", () => {
+          if (cb.checked) selected.add(id);
+          else selected.delete(id);
+          updateCount();
+        });
+
+        const label = document.createElement("div");
+        label.className = "name";
+        label.innerHTML = escapeHtml(p.name);
+
+        // Tap row toggles checkbox (nice on mobile)
+        row.addEventListener("click", (ev) => {
+          if (ev.target.tagName.toLowerCase() === "input") return;
+          cb.checked = !cb.checked;
+          cb.dispatchEvent(new Event("change"));
+        });
+
+        row.appendChild(cb);
+        row.appendChild(label);
+        nameList.appendChild(row);
+      });
+    }
+
+    deptSelect.addEventListener("change", () => {
+      currentDept = deptSelect.value;
+      setStatus("", "");
+      renderNames();
+    });
+
+    selectAllBtn.addEventListener("click", () => {
+      const checkboxes = nameList.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => { cb.checked = true; cb.dispatchEvent(new Event("change")); });
+    });
+
+    clearBtn.addEventListener("click", () => {
+      const checkboxes = nameList.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => { cb.checked = false; cb.dispatchEvent(new Event("change")); });
+    });
+
+    registerBtn.addEventListener("click", () => {
+    if (!currentDept || selected.size === 0) return;
+
+    const records = Array.from(selected).map(name => ({
+        department: currentDept,
+        name
+    }));
+
+    postForm.action = API_BASE;
+    recordsField.value = JSON.stringify(records);
+
+    setStatus("Registering…", "");
+    registerBtn.disabled = true;
+
+    postForm.submit();
+
+    // Show success and wait for user confirmation
+    setTimeout(() => {
+        setStatus(`Registered ${records.length} people successfully.`, "ok");
+        doneBtn.style.display = "inline-flex";
+    }, 700);
+    });
+
+    doneBtn.addEventListener("click", () => {
+      location.reload();
+    });
+
+
+    (async function init() {
+      try {
+        setStatus("Loading departments…", "");
+        const data = await loadJSONP(API_BASE + "?action=list");
+
+        if (!data || !data.ok) throw new Error((data && data.error) ? data.error : "Unknown error");
+
+        peopleByDept = data.peopleByDept || {};
+
+        const depts = data.departments || [];
+        deptSelect.innerHTML =
+          `<option value="">Select a department…</option>` +
+          depts.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join("");
+
+        setEnabled(true);
+        setStatus("Ready.", "ok");
+        renderNames();
+      } catch (err) {
+        setEnabled(false);
+        setStatus("Failed to load NameList: " + (err.message || err), "err");
+        deptSelect.innerHTML = `<option value="">Error</option>`;
+        nameList.innerHTML = `<div class="item"><div class="name" style="font-weight:400;color:#6B7280;">Check your Web App URL and deployment access.</div></div>`;
+      }
+    })();
+  </script>
+</body>
+</html>
