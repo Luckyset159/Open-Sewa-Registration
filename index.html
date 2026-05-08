@@ -83,7 +83,7 @@
     let appData = { peopleByDept: {}, dates: [], existingRegs: [] };
     let selectedNames = new Set();
 
-    // Today's Header Date in DD/MM/YY format
+    // Set Header Date (DD/MM/YY)
     const now = new Date();
     const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     const formattedToday = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getFullYear()).slice(-2)} - ${days[now.getDay()]}`;
@@ -113,10 +113,14 @@
         const res = await loadJSONP(`${API_BASE}?action=list`);
         if (!res.ok) throw new Error(res.error);
         appData = res;
+        
         dateSelect.innerHTML = '<option value="">Select Date...</option>' + 
           res.dates.map(d => `<option value="${d.value}">${d.display}</option>`).join('');
         dateSelect.disabled = false;
-        statusEl.innerHTML = "Ready.";
+        
+        // Status confirmation
+        const regCount = (res.existingRegs || []).length;
+        statusEl.innerHTML = `Ready. (${regCount} existing records loaded)`;
       } catch (e) {
         statusEl.innerHTML = `<span class="err">Error: ${e.message}</span>`;
       }
@@ -139,14 +143,14 @@
       updateUI();
       if (!dept || !date) return;
 
-      const people = appData.peopleByDept[dept] || [];
-      people.forEach(p => {
-        // Key format: yyyy-MM-dd__DEPARTMENT__NAME
-        const isReg = appData.existingRegs.includes(`${date}__${dept.toLowerCase()}__${p.name.toLowerCase()}`);
+      (appData.peopleByDept[dept] || []).forEach(p => {
+        // Build the key exactly like the backend (UPPERCASE)
+        const matchKey = `${date}__${dept.trim().toUpperCase()}__${p.name.trim().toUpperCase()}`;
+        const isReg = appData.existingRegs.includes(matchKey);
+        
         const div = document.createElement('div');
         div.className = 'item';
         
-        // Add "checked" and "disabled" attributes if already registered
         div.innerHTML = `<input type="checkbox" class="check" ${isReg ? 'checked disabled' : ''}>
           <span style="${isReg ? 'color:#9CA3AF' : ''}">${escapeHtml(p.name)}</span>
           ${isReg ? '<span class="registered-icon">✓ Registered</span>' : ''}`;
@@ -190,12 +194,10 @@
     };
 
     document.getElementById('selectAllBtn').onclick = () => {
-      // Only select names that aren't already registered (disabled checkboxes)
       nameList.querySelectorAll('input:not(:disabled)').forEach(cb => { if(!cb.checked) cb.parentElement.click(); });
     };
 
     document.getElementById('clearBtn').onclick = () => {
-      // Only clear names that aren't already registered
       nameList.querySelectorAll('input:not(:disabled)').forEach(cb => { if(cb.checked) cb.parentElement.click(); });
     };
 
