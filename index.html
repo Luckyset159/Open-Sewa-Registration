@@ -141,9 +141,12 @@
 
       const people = appData.peopleByDept[dept] || [];
       people.forEach(p => {
+        // Key format: yyyy-MM-dd__DEPARTMENT__NAME
         const isReg = appData.existingRegs.includes(`${date}__${dept}__${p.name}`);
         const div = document.createElement('div');
         div.className = 'item';
+        
+        // Add "checked" and "disabled" attributes if already registered
         div.innerHTML = `<input type="checkbox" class="check" ${isReg ? 'checked disabled' : ''}>
           <span style="${isReg ? 'color:#9CA3AF' : ''}">${escapeHtml(p.name)}</span>
           ${isReg ? '<span class="registered-icon">✓ Registered</span>' : ''}`;
@@ -187,10 +190,12 @@
     };
 
     document.getElementById('selectAllBtn').onclick = () => {
+      // Only select names that aren't already registered (disabled checkboxes)
       nameList.querySelectorAll('input:not(:disabled)').forEach(cb => { if(!cb.checked) cb.parentElement.click(); });
     };
 
     document.getElementById('clearBtn').onclick = () => {
+      // Only clear names that aren't already registered
       nameList.querySelectorAll('input:not(:disabled)').forEach(cb => { if(cb.checked) cb.parentElement.click(); });
     };
 
