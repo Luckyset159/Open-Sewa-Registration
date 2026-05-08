@@ -6,11 +6,7 @@
   <title>RSSB Open Sewa Registration</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#F5F7FB; --surface:#FFFFFF; --text:#111827; --muted:#6B7280; --border:#E5E7EB;
-      --primary:#1E40AF; --primary-600:#2563EB; --success:#0F766E; --danger:#B91C1C;
-      --shadow: 0 6px 18px rgba(17, 24, 39, .08); --radius: 16px;
-    }
+    :root{ --bg:#F5F7FB; --surface:#FFFFFF; --text:#111827; --muted:#6B7280; --border:#E5E7EB; --primary:#1E40AF; --primary-600:#2563EB; --success:#0F766E; --danger:#B91C1C; --shadow: 0 6px 18px rgba(17, 24, 39, .08); --radius: 16px; }
     body{ margin:0; font-family: Roboto, sans-serif; background: var(--bg); color: var(--text); }
     header{ position: sticky; top:0; z-index:10; background: linear-gradient(135deg, var(--primary), #111827); color:#fff; padding: 18px 16px; box-shadow: 0 6px 18px rgba(0,0,0,.12); }
     header h1{ margin:0; font-size: 18px; }
@@ -41,16 +37,13 @@
     <p id="headerDate"></p>
     <p>Select date and department, tick names, then register.</p>
   </header>
-
   <main>
     <div class="card">
       <div class="cardBody">
         <label>Sewa Date</label>
         <select id="dateSelect" disabled><option value="">Loading dates...</option></select>
-
         <label>Department</label>
         <select id="deptSelect" disabled><option value="">Select date first...</option></select>
-
         <div class="list">
           <div class="listHeader">
             <span class="pill" id="countPill">0 selected</span>
@@ -69,32 +62,25 @@
       </div>
     </div>
   </main>
-
   <form id="postForm" method="POST" target="hiddenFrame" style="display:none">
     <input type="hidden" name="action" value="register">
     <input type="hidden" name="sewaDate" id="sewaDateField">
     <input type="hidden" name="records" id="recordsField">
   </form>
   <iframe name="hiddenFrame" style="display:none"></iframe>
-
   <script>
     const API_BASE = "https://script.google.com/macros/s/AKfycbxh0C63rp_Ep_8ltS0p3ummdgxlnTorMVX89VeDWhAaABVH_cx4exDgjANugCdvGtxk/exec"; 
-    
     let appData = { peopleByDept: {}, dates: [], existingRegs: [] };
     let selectedNames = new Set();
-
-    // Set Header Date (DD/MM/YY)
     const now = new Date();
     const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     const formattedToday = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getFullYear()).slice(-2)} - ${days[now.getDay()]}`;
     document.getElementById('headerDate').textContent = formattedToday;
-
     const dateSelect = document.getElementById('dateSelect');
     const deptSelect = document.getElementById('deptSelect');
     const nameList = document.getElementById('nameList');
     const registerBtn = document.getElementById('registerBtn');
     const statusEl = document.getElementById('status');
-
     function loadJSONP(url) {
       return new Promise((resolve, reject) => {
         const cbName = "cb_" + Math.random().toString(36).slice(2);
@@ -106,35 +92,24 @@
         function cleanup(){ delete window[cbName]; script.remove(); }
       });
     }
-
     async function init() {
       try {
         statusEl.innerHTML = "Fetching dates and names...";
         const res = await loadJSONP(`${API_BASE}?action=list`);
         if (!res.ok) throw new Error(res.error);
         appData = res;
-        
-        dateSelect.innerHTML = '<option value="">Select Date...</option>' + 
-          res.dates.map(d => `<option value="${d.value}">${d.display}</option>`).join('');
+        dateSelect.innerHTML = '<option value="">Select Date...</option>' + res.dates.map(d => `<option value="${d.value}">${d.display}</option>`).join('');
         dateSelect.disabled = false;
-        
-        // Status confirmation
         const regCount = (res.existingRegs || []).length;
-        statusEl.innerHTML = `Ready. (${regCount} existing records loaded)`;
-      } catch (e) {
-        statusEl.innerHTML = `<span class="err">Error: ${e.message}</span>`;
-      }
+        statusEl.innerHTML = `Ready. (${regCount} records in log)`;
+      } catch (e) { statusEl.innerHTML = `<span class="err">Error: ${e.message}</span>`; }
     }
-
     dateSelect.onchange = () => {
-      deptSelect.innerHTML = '<option value="">Select Department...</option>' + 
-        appData.departments.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+      deptSelect.innerHTML = '<option value="">Select Department...</option>' + appData.departments.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
       deptSelect.disabled = false;
       renderNames();
     };
-
     deptSelect.onchange = renderNames;
-
     function renderNames() {
       const dept = deptSelect.value;
       const date = dateSelect.value;
@@ -142,19 +117,14 @@
       selectedNames.clear();
       updateUI();
       if (!dept || !date) return;
-
       (appData.peopleByDept[dept] || []).forEach(p => {
-        // Build the key exactly like the backend (UPPERCASE)
-        const matchKey = `${date}__${dept.trim().toUpperCase()}__${p.name.trim().toUpperCase()}`;
+        const matchKey = `${date.trim()}__${dept.trim().toUpperCase()}__${p.name.trim().toUpperCase()}`;
         const isReg = appData.existingRegs.includes(matchKey);
-        
         const div = document.createElement('div');
         div.className = 'item';
-        
         div.innerHTML = `<input type="checkbox" class="check" ${isReg ? 'checked disabled' : ''}>
           <span style="${isReg ? 'color:#9CA3AF' : ''}">${escapeHtml(p.name)}</span>
           ${isReg ? '<span class="registered-icon">✓ Registered</span>' : ''}`;
-        
         if (!isReg) {
           div.onclick = () => {
             const cb = div.querySelector('input');
@@ -166,19 +136,16 @@
         nameList.appendChild(div);
       });
     }
-
     function escapeHtml(text) {
       const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
       return text.replace(/[&<>"']/g, function(m) { return map[m]; });
     }
-
     function updateUI() {
       document.getElementById('countPill').textContent = `${selectedNames.size} selected`;
       registerBtn.disabled = selectedNames.size === 0;
       document.getElementById('selectAllBtn').disabled = !deptSelect.value;
       document.getElementById('clearBtn').disabled = !deptSelect.value;
     }
-
     registerBtn.onclick = () => {
       const records = Array.from(selectedNames).map(n => ({ department: deptSelect.value, name: n }));
       document.getElementById('sewaDateField').value = dateSelect.value;
@@ -187,20 +154,10 @@
       document.getElementById('postForm').submit();
       statusEl.innerHTML = `<span class="ok">Registering ${records.length} people...</span>`;
       registerBtn.style.display = 'none';
-      setTimeout(() => {
-        statusEl.innerHTML = `<span class="ok">Successfully registered!</span>`;
-        document.getElementById('doneBtn').style.display = 'inline-block';
-      }, 1500);
+      setTimeout(() => { statusEl.innerHTML = `<span class="ok">Successfully registered!</span>`; document.getElementById('doneBtn').style.display = 'inline-block'; }, 1500);
     };
-
-    document.getElementById('selectAllBtn').onclick = () => {
-      nameList.querySelectorAll('input:not(:disabled)').forEach(cb => { if(!cb.checked) cb.parentElement.click(); });
-    };
-
-    document.getElementById('clearBtn').onclick = () => {
-      nameList.querySelectorAll('input:not(:disabled)').forEach(cb => { if(cb.checked) cb.parentElement.click(); });
-    };
-
+    document.getElementById('selectAllBtn').onclick = () => { nameList.querySelectorAll('input:not(:disabled)').forEach(cb => { if(!cb.checked) cb.parentElement.click(); }); };
+    document.getElementById('clearBtn').onclick = () => { nameList.querySelectorAll('input:not(:disabled)').forEach(cb => { if(cb.checked) cb.parentElement.click(); }); };
     init();
   </script>
 </body>
