@@ -19,24 +19,25 @@
     .card{ background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow:hidden; }
     .cardBody{ padding: 16px; }
     label{ display:block; font-size: 12px; font-weight: 500; color: var(--muted); margin: 12px 0 6px; }
-    select{ width:100%; padding: 12px; border-radius: 12px; border:1px solid var(--border); font-size: 15px; }
+    select{ width:100%; padding: 12px; border-radius: 12px; border:1px solid var(--border); font-size: 15px; background: #fff; }
     .list{ margin-top: 14px; border-top: 1px solid var(--border); }
     .listHeader{ display:flex; gap:10px; align-items:center; justify-content: space-between; padding: 12px 16px; background: #F9FAFB; }
     .pill{ padding: 6px 12px; border-radius: 999px; background: #EEF2FF; color: #1E3A8A; font-size: 12px; font-weight: 600; }
-    button{ border:0; border-radius: 999px; padding: 10px 16px; font-weight: 600; cursor:pointer; }
+    button{ border:0; border-radius: 999px; padding: 10px 16px; font-weight: 600; cursor:pointer; transition: opacity 0.2s; }
+    button:disabled{ opacity: 0.5; cursor: not-allowed; }
     .btnPrimary{ background: var(--primary-600); color:#fff; }
     .btnGhost{ background:#fff; border: 1px solid var(--border); }
     .item{ display:flex; align-items:center; gap:12px; padding: 12px 16px; border-bottom: 1px solid #F3F4F6; cursor:pointer; }
     .check{ width: 20px; height: 20px; accent-color: var(--primary-600); }
     .registered-icon { color: var(--success); font-weight: bold; margin-left: auto; font-size: 14px; }
-    .status{ padding: 16px; font-size: 13px; text-align: center; }
-    .ok{ color: var(--success); }
-    .err{ color: var(--danger); }
+    .status{ padding: 16px; font-size: 13px; text-align: center; min-height: 50px; }
+    .ok{ color: var(--success); font-weight: bold; }
+    .err{ color: var(--danger); font-weight: bold; }
   </style>
 </head>
 <body>
   <header>
-    <h1 id="mainTitle">RSSB Open Sewa Registration</h1>
+    <h1>RSSB Open Sewa Registration</h1>
     <p id="headerDate"></p>
     <p>Select date and department, tick names, then register.</p>
   </header>
@@ -45,10 +46,10 @@
     <div class="card">
       <div class="cardBody">
         <label>Sewa Date</label>
-        <select id="dateSelect" disabled><option>Loading dates...</option></select>
+        <select id="dateSelect" disabled><option value="">Loading dates...</option></select>
 
         <label>Department</label>
-        <select id="deptSelect" disabled><option>Select date first...</option></select>
+        <select id="deptSelect" disabled><option value="">Select date first...</option></select>
 
         <div class="list">
           <div class="listHeader">
@@ -58,7 +59,7 @@
               <button class="btnGhost" id="clearBtn" disabled>Clear</button>
             </div>
           </div>
-          <div id="nameList" style="max-height: 400px; overflow: auto;"></div>
+          <div id="nameList" style="max-height: 400px; overflow: auto; min-height: 100px;"></div>
         </div>
       </div>
       <div class="status" id="status"></div>
@@ -77,7 +78,6 @@
   <iframe name="hiddenFrame" style="display:none"></iframe>
 
   <script>
-    // Update this with your actual URL
     const API_BASE = "https://script.google.com/macros/s/AKfycbxh0C63rp_Ep_8ltS0p3ummdgxlnTorMVX89VeDWhAaABVH_cx4exDgjANugCdvGtxk/exec"; 
     
     let appData = { peopleByDept: {}, dates: [], existingRegs: [] };
@@ -93,19 +93,40 @@
     const deptSelect = document.getElementById('deptSelect');
     const nameList = document.getElementById('nameList');
     const registerBtn = document.getElementById('registerBtn');
+    const statusEl = document.getElementById('status');
+
+    // JSONP Helper for reliable communication
+    function loadJSONP(url) {
+      return new Promise((resolve, reject) => {
+        const cbName = "cb_" + Math.random().toString(36).slice(2);
+        window[cbName] = (data) => { cleanup(); resolve(data); };
+        const script = document.createElement("script");
+        script.src = url + (url.includes("?") ? "&" : "?") + "callback=" + cbName;
+        script.onerror = () => { cleanup(); reject(new Error("Network Error (Check URL)")); };
+        document.head.appendChild(script);
+        function cleanup(){ delete window[cbName]; script.remove(); }
+      });
+    }
 
     async function init() {
       try {
-        const res = await fetch(`${API_BASE}?action=list`).then(r => r.json());
-        if (!res.ok) throw new Error(res.error);
+        statusEl.innerHTML = "Fetching dates and names...";
+        const res = await loadJSONP(`${API_BASE}?action=list`);
+        if (!res.ok) throw new Error(res.error || "Failed to load data");
+        
         appData = res;
 
-        dateSelect.innerHTML = '<option value="">Select Date...</option>' + 
-          res.dates.map(d => `<option value="${d.value}">${d.display}</option>`).join('');
-        dateSelect.disabled = false;
-        document.getElementById('status').textContent = "Ready.";
+        if (res.dates && res.dates.length > 0) {
+          dateSelect.innerHTML = '<option value="">Select Date...</option>' + 
+            res.dates.map(d => `<option value="${d.value}">${d.display}</option>`).join('');
+          dateSelect.disabled = false;
+          statusEl.innerHTML = "Ready.";
+        } else {
+          dateSelect.innerHTML = '<option value="">No future dates found</option>';
+          statusEl.innerHTML = '<span class="err">No dates found in OpenSewa_days tab.</span>';
+        }
       } catch (e) {
-        document.getElementById('status').innerHTML = `<span class="err">Error: ${e.message}</span>`;
+        statusEl.innerHTML = `<span class="err">Error: ${e.message}</span>`;
       }
     }
 
@@ -127,7 +148,13 @@
 
       if (!dept || !date) return;
 
-      (appData.peopleByDept[dept] || []).forEach(p => {
+      const people = appData.peopleByDept[dept] || [];
+      if (people.length === 0) {
+        nameList.innerHTML = '<div style="padding:20px; color:#6B7280;">No names in this department.</div>';
+        return;
+      }
+
+      people.forEach(p => {
         const isReg = appData.existingRegs.includes(`${date}__${dept}__${p.name}`);
         
         const div = document.createElement('div');
@@ -152,7 +179,7 @@
 
     function updateUI() {
       document.getElementById('countPill').textContent = `${selectedNames.size} selected`;
-      registerBtn.disabled = selectedNames.size === 0;
+      registerBtn.disabled = (selectedNames.size === 0);
       document.getElementById('selectAllBtn').disabled = !deptSelect.value;
       document.getElementById('clearBtn').disabled = !deptSelect.value;
     }
@@ -164,10 +191,10 @@
       document.getElementById('postForm').action = API_BASE;
       document.getElementById('postForm').submit();
       
-      document.getElementById('status').innerHTML = `<span class="ok">Registering ${records.length} people...</span>`;
+      statusEl.innerHTML = `<span class="ok">Registering ${records.length} people...</span>`;
       registerBtn.style.display = 'none';
       setTimeout(() => {
-        document.getElementById('status').innerHTML = `<span class="ok">Successfully registered!</span>`;
+        statusEl.innerHTML = `<span class="ok">Successfully registered!</span>`;
         document.getElementById('doneBtn').style.display = 'inline-block';
       }, 1500);
     };
