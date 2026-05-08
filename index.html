@@ -74,13 +74,17 @@
     let selectedNames = new Set();
     const now = new Date();
     const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const formattedToday = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getFullYear()).slice(-2)} - ${days[now.getDay()]}`;
+    
+    // UPDATED: mm/dd/yy format for header
+    const formattedToday = `${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}/${String(now.getFullYear()).slice(-2)} - ${days[now.getDay()]}`;
     document.getElementById('headerDate').textContent = formattedToday;
+
     const dateSelect = document.getElementById('dateSelect');
     const deptSelect = document.getElementById('deptSelect');
     const nameList = document.getElementById('nameList');
     const registerBtn = document.getElementById('registerBtn');
     const statusEl = document.getElementById('status');
+
     function loadJSONP(url) {
       return new Promise((resolve, reject) => {
         const cbName = "cb_" + Math.random().toString(36).slice(2);
@@ -92,24 +96,29 @@
         function cleanup(){ delete window[cbName]; script.remove(); }
       });
     }
+
+    function clean(s) { return String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
+
     async function init() {
       try {
-        statusEl.innerHTML = "Fetching dates and names...";
+        statusEl.innerHTML = "Fetching data...";
         const res = await loadJSONP(`${API_BASE}?action=list`);
         if (!res.ok) throw new Error(res.error);
         appData = res;
         dateSelect.innerHTML = '<option value="">Select Date...</option>' + res.dates.map(d => `<option value="${d.value}">${d.display}</option>`).join('');
         dateSelect.disabled = false;
-        const regCount = (res.existingRegs || []).length;
-        statusEl.innerHTML = `Ready. (${regCount} records in log)`;
+        statusEl.innerHTML = `Ready. (${res.existingRegs.length} existing records loaded)`;
       } catch (e) { statusEl.innerHTML = `<span class="err">Error: ${e.message}</span>`; }
     }
+
     dateSelect.onchange = () => {
       deptSelect.innerHTML = '<option value="">Select Department...</option>' + appData.departments.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
       deptSelect.disabled = false;
       renderNames();
     };
+
     deptSelect.onchange = renderNames;
+
     function renderNames() {
       const dept = deptSelect.value;
       const date = dateSelect.value;
@@ -117,14 +126,18 @@
       selectedNames.clear();
       updateUI();
       if (!dept || !date) return;
+
       (appData.peopleByDept[dept] || []).forEach(p => {
-        const matchKey = `${date.trim()}__${dept.trim().toUpperCase()}__${p.name.trim().toUpperCase()}`;
+        // MATCHING KEY: YYYY-MM-DD__CLEAN_DEPT__CLEAN_NAME
+        const matchKey = `${date}__${clean(dept)}__${clean(p.name)}`;
         const isReg = appData.existingRegs.includes(matchKey);
+        
         const div = document.createElement('div');
         div.className = 'item';
         div.innerHTML = `<input type="checkbox" class="check" ${isReg ? 'checked disabled' : ''}>
           <span style="${isReg ? 'color:#9CA3AF' : ''}">${escapeHtml(p.name)}</span>
           ${isReg ? '<span class="registered-icon">✓ Registered</span>' : ''}`;
+        
         if (!isReg) {
           div.onclick = () => {
             const cb = div.querySelector('input');
@@ -136,16 +149,19 @@
         nameList.appendChild(div);
       });
     }
+
     function escapeHtml(text) {
       const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
       return text.replace(/[&<>"']/g, function(m) { return map[m]; });
     }
+
     function updateUI() {
       document.getElementById('countPill').textContent = `${selectedNames.size} selected`;
       registerBtn.disabled = selectedNames.size === 0;
       document.getElementById('selectAllBtn').disabled = !deptSelect.value;
       document.getElementById('clearBtn').disabled = !deptSelect.value;
     }
+
     registerBtn.onclick = () => {
       const records = Array.from(selectedNames).map(n => ({ department: deptSelect.value, name: n }));
       document.getElementById('sewaDateField').value = dateSelect.value;
@@ -156,6 +172,7 @@
       registerBtn.style.display = 'none';
       setTimeout(() => { statusEl.innerHTML = `<span class="ok">Successfully registered!</span>`; document.getElementById('doneBtn').style.display = 'inline-block'; }, 1500);
     };
+
     document.getElementById('selectAllBtn').onclick = () => { nameList.querySelectorAll('input:not(:disabled)').forEach(cb => { if(!cb.checked) cb.parentElement.click(); }); };
     document.getElementById('clearBtn').onclick = () => { nameList.querySelectorAll('input:not(:disabled)').forEach(cb => { if(cb.checked) cb.parentElement.click(); }); };
     init();
